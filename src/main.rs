@@ -1,6 +1,6 @@
 use axum::{
     extract::State,
-    http::StatusCode,
+    http::{HeaderValue, Method, StatusCode},
     response::Json,
     routing::{get, post},
     Router,
@@ -8,6 +8,7 @@ use axum::{
 use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::net::SocketAddr;
+use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
@@ -65,7 +66,12 @@ async fn main() {
     let app = Router::new()
         .route("/user/list", get(list_users))
         .route("/user/create", post(create_user))
-        .with_state(pool);
+        .with_state(pool)
+        .layer(
+            CorsLayer::new()
+                .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+                .allow_methods([Method::GET]),
+        );
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::debug!("listening on {}", addr);
