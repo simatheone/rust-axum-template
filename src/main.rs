@@ -67,6 +67,8 @@ async fn main() {
         .route("/user/create", post(create_user))
         .with_state(pool);
 
+    let app = app.fallback(handler_404);
+
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
@@ -112,4 +114,8 @@ where
     E: std::error::Error,
 {
     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+}
+
+async fn handler_404() -> impl IntoResponse {
+    (StatusCode::NOT_FOUND, "nothing to see here")
 }
